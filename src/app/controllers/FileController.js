@@ -7,7 +7,6 @@ class FileController {
     const file = await File.create({
       name,
       path,
-      url,
     });
     return res.json(file);
   }
