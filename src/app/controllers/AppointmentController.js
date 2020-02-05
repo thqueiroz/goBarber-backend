@@ -6,10 +6,14 @@ import File from '../models/File';
 
 class AppointmentController {
   async index(req, res) {
+    const { page = 1 } = req.query;
+
     const appointments = Appoitment.findAll({
       where: { user_id: req.userId, cancelled_at: null },
       order: ['date'],
       attributes: ['id', 'date'],
+      limit: 20,
+      offset: (page - 1) * 20,
       include: [
         {
           model: User,
@@ -63,17 +67,19 @@ class AppointmentController {
      * Check date is avaibility
      */
 
-     const checkAvailability = await Appoitment.findOne({
-       where: {
-         provider_id,
-         cancelled_at: null,
-         date: hourStart,
-       },
-     });
+    const checkAvailability = await Appoitment.findOne({
+      where: {
+        provider_id,
+        cancelled_at: null,
+        date: hourStart,
+      },
+    });
 
-     if(checkAvailability) {
-       return res.status(400).json({ error:  'Appointment date is not availability' });
-     }
+    if (checkAvailability) {
+      return res
+        .status(400)
+        .json({ error: 'Appointment date is not availability' });
+    }
 
     const appointment = await Appoitment.create({
       user_id: req.userId,
