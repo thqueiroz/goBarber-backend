@@ -4,7 +4,8 @@ import pt from 'date-fns/locale/pt';
 import Appoitment from '../models/Appointment';
 import User from '../models/User';
 import File from '../models/File';
-import Mail from '../../lib/Mail';
+import Queue from '../../lib/Queue';
+import CancellationMail from '../jobs/CancellationMail';
 
 import Notification from '../schemas/Notification';
 
@@ -15,7 +16,7 @@ class AppointmentController {
     const appointments = Appoitment.findAll({
       where: { user_id: req.userId, cancelled_at: null },
       order: ['date'],
-      attributes: ['id', 'date'],
+      attributes: ['id', 'date', 'past', 'cancelable'],
       limit: 20,
       offset: (page - 1) * 20,
       include: [
@@ -142,17 +143,8 @@ class AppointmentController {
 
     await appointment.save();
 
-    Mail.sendMail({
-      to: `${appointment.provider.name} <${appointment.provider.email}>`,
-      subject: 'Agendamento cancelado',
-      template: 'cancelation',
-      context: {
-        provider: appointment.provider.name,
-        user: appointment.user.name,
-        date: format(appointment.date, "'dia ' dd 'de' MMMM, as' H:mm'h'", {
-          locale: pt,
-        }),
-      },
+    await Queue.add(CancellationMail.key, {
+      appointment,
     });
 
     return res.json(appointment);
