@@ -19,7 +19,7 @@ class SchaduleController {
     const appoitments = await Appointment.findAll({
       where: {
         provider_id: req.userId,
-        cancelled_at: false,
+        canceled_at: null,
         date: {
           [Op.between]: [startOfDay(parseDate), endOfDay(parseDate)],
         },
