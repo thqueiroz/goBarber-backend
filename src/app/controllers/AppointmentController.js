@@ -11,14 +11,10 @@ import Notification from '../schemas/Notification';
 
 class AppointmentController {
   async index(req, res) {
-    const { page = 1 } = req.query;
-
-    const appointments = Appoitment.findAll({
-      where: { user_id: req.userId, cancelled_at: null },
+    const appointments = await Appoitment.findAll({
+      where: { user_id: req.userId, canceled_at: null },
       order: ['date'],
       attributes: ['id', 'date', 'past', 'cancelable'],
-      limit: 20,
-      offset: (page - 1) * 20,
       include: [
         {
           model: User,
@@ -34,13 +30,14 @@ class AppointmentController {
         },
       ],
     });
+
     return res.json(appointments);
   }
 
   async store(req, res) {
-    const schema = Yup.object.shape({
+    const schema = Yup.object().shape({
       provider_id: Yup.number().required(),
-      date: Yup.date().required,
+      date: Yup.date().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
@@ -75,7 +72,7 @@ class AppointmentController {
     const checkAvailability = await Appoitment.findOne({
       where: {
         provider_id,
-        cancelled_at: null,
+        canceled_at: null,
         date: hourStart,
       },
     });
